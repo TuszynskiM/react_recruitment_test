@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Typography, IconButton, makeStyles } from "@material-ui/core";
-import PropTypes from "prop-types";
 import { AddBox, IndeterminateCheckBox } from "@material-ui/icons";
+import PropTypes from "prop-types";
 import { useDispatch } from "react-redux";
 
 import useDebounce from "hooks/useDebounce";
@@ -21,40 +21,44 @@ const CartOptions = ({ min, max, isBlocked, pid, price }) => {
 
   const isMount = useRef(false);
   const [cartQty, setCartQty] = useState(min);
-  const [qtyAdded, setQtyAdded] = useState(0);
-  const cartDebounceValue = useDebounce(cartQty);
+  const [added, setAdded] = useState(0);
+  const quantity = useDebounce(cartQty);
 
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const amountToCount = (cartQty - qtyAdded) * parseFloat(price);
-    if (isMount.current) {
-      const body = {
-        pid,
-        quantity: cartDebounceValue,
-      };
-      checkCartQty(body).then((resp) => {
-        if (resp.isError) {
-          setCartQty(min);
-        } else {
-          setQtyAdded(cartQty);
-          dispatch(setAmountToPay(amountToCount));
-        }
-      });
-    } else {
-      setQtyAdded(cartQty);
-      dispatch(setAmountToPay(amountToCount));
+    const amountToCount = (cartQty - added) * parseFloat(price);
+    if (!isMount.current) {
       isMount.current = true;
+      return onSetAmount(amountToCount);
     }
-  }, [cartDebounceValue]);
 
-  const handleAdd = () => {
+    const body = { pid, quantity };
+    checkCartQty(body).then((resp) => {
+      resp.isError ? onSetCartQty(min) : onSetAmount(amountToCount);
+    });
+  }, [quantity]);
+
+  const onSetAmount = useCallback((amount) => {
+    onSetAdded(cartQty);
+    dispatch(setAmountToPay(amount));
+  }, []);
+
+  const onSetCartQty = useCallback((value) => {
+    setCartQty(value);
+  }, []);
+
+  const onSetAdded = useCallback((value) => {
+    setAdded(value);
+  }, []);
+
+  const handleAdd = useCallback(() => {
     setCartQty((prevState) => prevState + 1);
-  };
+  }, []);
 
-  const handleRemove = () => {
+  const handleRemove = useCallback(() => {
     setCartQty((prevState) => prevState - 1);
-  };
+  }, []);
 
   return (
     <Box className={classes.shoppingCartContainer}>
@@ -77,4 +81,4 @@ CartOptions.propTypes = {
   price: PropTypes.string.isRequired,
 };
 
-export default CartOptions;
+export default React.memo(CartOptions);

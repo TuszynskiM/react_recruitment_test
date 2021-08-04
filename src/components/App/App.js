@@ -1,18 +1,12 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Box, List, Typography } from "@material-ui/core";
 
 import { fetchCart } from "actions";
-import CartOptions from "components/CartOptions/CartOptions";
-import {
-  Box,
-  CircularProgress,
-  List,
-  ListItem,
-  ListItemText,
-  Divider,
-  Typography,
-} from "@material-ui/core";
+import CartOptions from "components/CartOptions";
 import { getFormatedAmount } from "utils/getFormatedAmount";
+import CustomListItem from "components/CustomListItem";
+import Loader from "components/shared/Loader";
 
 import "./App.css";
 
@@ -27,24 +21,17 @@ const App = () => {
   return (
     <>
       {loading ? (
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          height="100vh"
-        >
-          <CircularProgress size={80} />
-        </Box>
+        <Loader isLoading={loading} />
       ) : (
-        <div className="container">
-          <h3>Lista produktów</h3>
-          <List>
-            {cart.map((item) => (
-              <React.Fragment key={item.pid}>
-                <ListItem>
-                  <ListItemText>
-                    {`${item.name}, cena: ${getFormatedAmount(item.price)}`}
-                  </ListItemText>
+        <React.StrictMode>
+          <div className="container">
+            <h3>Lista produktów</h3>
+            <List>
+              {cart.map((item) => (
+                <CustomListItem
+                  key={item.pid}
+                  name={`${item.name}, cena: ${getFormatedAmount(item.price)}`}
+                >
                   <CartOptions
                     min={item.min}
                     max={item.max}
@@ -52,15 +39,14 @@ const App = () => {
                     pid={item.pid}
                     price={getFormatedAmount(item.price)}
                   />
-                </ListItem>
-                <Divider />
-              </React.Fragment>
-            ))}
-          </List>
-          <Typography style={{ fontWeight: "bold", marginTop: 24 }}>
-            {`Razem do zapłaty: ${getFormatedAmount(toPay)}`}
-          </Typography>
-        </div>
+                </CustomListItem>
+              ))}
+            </List>
+            <Typography style={{ fontWeight: "bold", marginTop: 24 }}>
+              {`Razem do zapłaty: ${getFormatedAmount(toPay)}`}
+            </Typography>
+          </div>
+        </React.StrictMode>
       )}
     </>
   );
